@@ -58,7 +58,7 @@ program_parser.add_argument("--num_workers", type=int, default=4)
 # parser = SlotAttentionAE.add_model_specific_args(parent_parser=parser)
 
 # Add all the available trainer options to argparse#
-parser = pl.Trainer.add_argparse_args(parser)
+#parser = pl.Trainer.add_argparse_args(parser)
 
 # Parse input
 args = parser.parse_args()
