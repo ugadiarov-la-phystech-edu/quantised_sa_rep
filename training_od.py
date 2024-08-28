@@ -139,7 +139,6 @@ autoencoder.load_state_dict(state_dict=state_dict, strict=False)
 # trainer parameters
 profiler = None  # 'simple'/'advanced'/None
 accelerator = 'gpu'
-devices = [int(args.devices)]
 
 # trainer
 trainer = pl.Trainer(accelerator='gpu',
@@ -154,6 +153,8 @@ trainer = pl.Trainer(accelerator='gpu',
 
 if not len(args.from_checkpoint):
     args.from_checkpoint = None
+
+print('Resume checkpoint:', args.from_checkpoint)
 
 # Train
 trainer.fit(autoencoder, train_dataloaders=train_loader, val_dataloaders=val_loader, ckpt_path=args.from_checkpoint)
