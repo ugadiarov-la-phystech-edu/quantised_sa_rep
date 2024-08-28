@@ -36,6 +36,7 @@ class SlotAttentionAE(pl.LightningModule):
         self.in_channels = in_channels
         self.slot_size = slot_size
         self.hidden_size = hidden_size
+        self.log_images = 8
 
         # Encoder
         self.encoder = nn.Sequential(
@@ -93,10 +94,13 @@ class SlotAttentionAE(pl.LightningModule):
         result = torch.sum(recons, dim=1)
         return result, recons, kl_loss
 
-    def step(self, batch):
+    def step(self, batch, return_result=False):
         imgs = batch['image']
-        result, _, kl_loss = self(imgs)
+        result, recons, kl_loss = self(imgs)
         loss = F.mse_loss(result, imgs)
+        if return_result:
+            return loss, kl_loss, result, recons
+
         return loss, kl_loss
 
     def training_step(self, batch, batch_idx):
@@ -105,8 +109,8 @@ class SlotAttentionAE(pl.LightningModule):
         optimizer = optimizer.optimizer
 
         loss, kl_loss = self.step(batch)
-        self.log('Training MSE', loss)
-        self.log('Training KL', kl_loss)
+        self.log('Training MSE', loss, on_step=False, on_epoch=True)
+        self.log('Training KL', kl_loss, on_step=False, on_epoch=True)
 
         loss = loss + kl_loss * self.beta
         optimizer.zero_grad()
@@ -117,28 +121,25 @@ class SlotAttentionAE(pl.LightningModule):
         self.log('lr', sch.get_last_lr()[0], on_step=False, on_epoch=True)
         return loss
 
+    @staticmethod
+    def denormalize_image(x):
+        return x / 2 + 0.5
+
     def validation_step(self, batch, batch_idx):
-        loss, kl_loss = self.step(batch)
-        self.log('Validation MSE', loss)
-        self.log('Validation KL', kl_loss)
+        loss, kl_loss, result, recons = self.step(batch, return_result=True)
+        self.log('Validation MSE', loss, on_step=False, on_epoch=True)
+        self.log('Validation KL', kl_loss, on_step=False, on_epoch=True)
 
         if batch_idx == 0:
-            imgs = batch['image'][:8]
-            result, recons, _ = self(imgs)
-            self.trainer.logger.experiment.log({
-                'images': [wandb.Image(x / 2 + 0.5) for x in torch.clamp(imgs, -1, 1)],
-                'reconstructions': [wandb.Image(x / 2 + 0.5) for x in torch.clamp(result, -1, 1)]
-            })
-            self.trainer.logger.experiment.log({
-                f'{i} slot': [wandb.Image(x / 2 + 0.5) for x in torch.clamp(recons[:, i], -1, 1)]
-                for i in range(self.num_slots)
-            })
-        return loss
+            imgs = batch['image'][:self.log_images]
+            result = result[:self.log_images]
+            recons = recons[:self.log_images]
+            self.logger.log_image(key='images', images=list(torch.clamp(self.denormalize_image(imgs), 0, 1).detach().cpu()))
+            self.logger.log_image(key='reconstructions', images=list(torch.clamp(self.denormalize_image(result), 0, 1).detach().cpu()))
+            for i in range(self.num_slots):
+                self.logger.log_image(key=f'slot#{i}', images=list(torch.clamp(self.denormalize_image(recons[:, i]), 0, 1).detach().cpu()))
 
-    def validation_epoch_end(self, outputdata):
-        if self.current_epoch % 10 == 0:
-            save_path = "./sa_autoencoder_end_to_end"
-            self.trainer.save_checkpoint(os.path.join(save_path, f"{self.current_epoch}_{self.beta}_sa_od_pretrained.ckpt"))
+        return loss
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.parameters(), lr=self.lr)
