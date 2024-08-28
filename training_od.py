@@ -29,6 +29,9 @@ DEFAULT_SEED = 42
 # ------------------------------------------------------------
 parser = ArgumentParser()
 
+parser.add_argument('--max_epochs', type=int, default=100)
+parser.add_argument('--num_slots', type=int, default=7)
+
 # add PROGRAM level args
 program_parser = parser.add_argument_group('program')
 
@@ -43,6 +46,9 @@ program_parser.add_argument("--batch_size", type=int, default=64)
 program_parser.add_argument("--from_checkpoint", type=str, default='')
 program_parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
 program_parser.add_argument("--nums", type=int, nargs='+')
+program_parser.add_argument("--project", type=str, required=True)
+program_parser.add_argument("--group", type=str, required=True)
+program_parser.add_argument("--run_name", type=str, required=True)
 program_parser.add_argument("--sa_state_dict", type=str, default='./clevr7_od')
 program_parser.add_argument("--pretrained", type=bool, default=False)
 program_parser.add_argument("--beta", type=float, default=2.)
@@ -97,8 +103,7 @@ autoencoder = SlotAttentionAE(**dict_args)
 
 project_name = 'object_discovery_CLEVR'
 
-wandb_logger = WandbLogger(project=project_name, name=f'nums {args.nums!r} s {args.seed} kl {args.beta}',
-                           log_model=True)
+wandb_logger = WandbLogger(project=args.project, group=args.group, name=args.run_name, log_model=True)
 # ------------------------------------------------------------
 # Callbacks
 # ------------------------------------------------------------
