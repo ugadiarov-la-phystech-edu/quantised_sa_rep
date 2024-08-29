@@ -47,7 +47,9 @@ class SlotAttentionAE(pl.LightningModule):
                  hidden_size=64,
                  beta=2,
                  lr=4e-4,
-                 num_steps=int(3e5), **kwargs
+                 num_steps=int(3e5),
+                 log_images=4,
+                 **kwargs
                  ):
         super().__init__()
         self.resolution = resolution
@@ -56,7 +58,7 @@ class SlotAttentionAE(pl.LightningModule):
         self.in_channels = in_channels
         self.slot_size = slot_size
         self.hidden_size = hidden_size
-        self.log_images = 8
+        self.log_images = log_images
 
         # Encoder
         self.encoder = nn.Sequential(

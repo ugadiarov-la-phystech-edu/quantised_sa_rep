@@ -53,6 +53,7 @@ program_parser.add_argument("--sa_state_dict", type=str, default='./clevr7_od')
 program_parser.add_argument("--pretrained", type=bool, default=False)
 program_parser.add_argument("--beta", type=float, default=2.)
 program_parser.add_argument("--num_workers", type=int, default=4)
+program_parser.add_argument("--log_images", type=int, default=4)
 
 # Add model specific args
 # parser = SlotAttentionAE.add_model_specific_args(parent_parser=parser)
@@ -89,7 +90,7 @@ val_dataset = CLEVR(images_path=os.path.join(args.train_path, 'images', 'val'),
 
 train_loader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.num_workers, shuffle=True,
                           drop_last=True)
-val_loader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.num_workers, shuffle=False,
+val_loader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.num_workers, shuffle=True,
                         drop_last=True)
 
 # ------------------------------------------------------------
