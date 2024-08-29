@@ -80,6 +80,8 @@ seed_everything(args.seed, workers=True)
 # ------------------------------------------------------------
 
 
+torch.set_float32_matmul_precision('medium')
+
 train_dataset = CLEVR(images_path=os.path.join(args.train_path, 'images', 'train'),
                       scenes_path=os.path.join(args.train_path, 'scenes', 'CLEVR_train_scenes.json'),
                       max_objs=6)
