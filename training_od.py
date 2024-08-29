@@ -117,16 +117,16 @@ monitor = 'Validation MSE'
 # checkpoints
 save_top_k = 1
 checkpoint_callback = ModelCheckpoint(monitor=monitor, save_top_k=save_top_k)
-every_epoch_callback = ModelCheckpoint(every_n_epochs=10, monitor=None)
+every_epoch_callback = ModelCheckpoint(every_n_epochs=10)
 # Learning rate monitor
 lr_monitor = LearningRateMonitor(logging_interval='step')
 
 # logger_callback = SlotAttentionLogger(val_samples=next(iter(val_loader)))
 
 callbacks = [
-    checkpoint_callback,
+    # checkpoint_callback,
     # logger_callback,
-    # every_epoch_callback,
+    every_epoch_callback,
     # swa,
     # early_stop_callback,
     lr_monitor,
