@@ -1,5 +1,6 @@
 import os
 
+import numpy as np
 import pytorch_lightning as pl
 import torch
 import wandb
@@ -11,6 +12,25 @@ from torch.optim import lr_scheduler
 from modules import Decoder, PosEmbeds, CoordQuantizer
 from modules.slot_attention import SlotAttentionBase
 from utils import spatial_broadcast, spatial_flatten
+
+
+def visualize(images):
+    B, _, H, W = images[0].shape  # first image is observation
+    viz_imgs = []
+    for _img in images:
+        if len(_img.shape) == 4:
+            viz_imgs.append(_img)
+        else:
+            viz_imgs += list(torch.unbind(_img, dim=1))
+    viz_imgs = torch.cat(viz_imgs, dim=-1)
+    # return torch.cat(torch.unbind(viz_imgs,dim=0), dim=-2).unsqueeze(0)
+    return viz_imgs
+
+
+def for_viz(x):
+    return np.array(
+        (x.clamp(-1, 1).permute(0, 2, 3, 1).detach().cpu().numpy() + 1) / 2 * 255.0, dtype=np.uint8
+    )
 
 
 class SlotAttentionAE(pl.LightningModule):
@@ -121,10 +141,6 @@ class SlotAttentionAE(pl.LightningModule):
         self.log('lr', sch.get_last_lr()[0], on_step=False, on_epoch=True)
         return loss
 
-    @staticmethod
-    def denormalize_image(x):
-        return x / 2 + 0.5
-
     def validation_step(self, batch, batch_idx):
         loss, kl_loss, result, recons = self.step(batch, return_result=True)
         self.log('Validation MSE', loss, on_step=False, on_epoch=True)
@@ -134,10 +150,7 @@ class SlotAttentionAE(pl.LightningModule):
             imgs = batch['image'][:self.log_images]
             result = result[:self.log_images]
             recons = recons[:self.log_images]
-            self.logger.log_image(key='images', images=list(torch.clamp(self.denormalize_image(imgs), 0, 1).detach().cpu()))
-            self.logger.log_image(key='reconstructions', images=list(torch.clamp(self.denormalize_image(result), 0, 1).detach().cpu()))
-            for i in range(self.num_slots):
-                self.logger.log_image(key=f'slot#{i}', images=list(torch.clamp(self.denormalize_image(recons[:, i]), 0, 1).detach().cpu()))
+            self.logger.log_image(key="samples", images=list(for_viz(visualize([imgs, result, recons]))))
 
         return loss
 

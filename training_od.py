@@ -112,13 +112,9 @@ wandb_logger = WandbLogger(project=args.project, group=args.group, name=args.run
 monitor = 'Validation MSE'
 
 # checkpoints
-dirpath = os.path.join(args.project, args.group, args.run_name)
-os.makedirs(dirpath)
-print('Checkpoints folder:', dirpath)
-
 save_top_k = 1
-checkpoint_callback = ModelCheckpoint(dirpath=dirpath, monitor=monitor, save_top_k=save_top_k)
-every_epoch_callback = ModelCheckpoint(dirpath=dirpath, every_n_epochs=10, monitor=None)
+checkpoint_callback = ModelCheckpoint(monitor=monitor, save_top_k=save_top_k)
+every_epoch_callback = ModelCheckpoint(every_n_epochs=10, monitor=None)
 # Learning rate monitor
 lr_monitor = LearningRateMonitor(logging_interval='step')
 
@@ -127,7 +123,7 @@ lr_monitor = LearningRateMonitor(logging_interval='step')
 callbacks = [
     checkpoint_callback,
     # logger_callback,
-    every_epoch_callback,
+    # every_epoch_callback,
     # swa,
     # early_stop_callback,
     lr_monitor,
