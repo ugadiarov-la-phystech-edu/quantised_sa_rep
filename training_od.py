@@ -102,6 +102,9 @@ val_loader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=arg
 # model
 dict_args = vars(args)
 
+checkpoint_dir = os.path.join(args.project, args.group, args.run_name)
+os.makedirs(checkpoint_dir, exist_ok=True)
+dict_args['checkpoint_dir'] = checkpoint_dir
 autoencoder = SlotAttentionAE(**dict_args)
 
 project_name = 'object_discovery_CLEVR'
@@ -126,7 +129,7 @@ lr_monitor = LearningRateMonitor(logging_interval='step')
 callbacks = [
     # checkpoint_callback,
     # logger_callback,
-    every_epoch_callback,
+    # every_epoch_callback,
     # swa,
     # early_stop_callback,
     lr_monitor,

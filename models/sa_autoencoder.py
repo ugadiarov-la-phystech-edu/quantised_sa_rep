@@ -39,6 +39,8 @@ class SlotAttentionAE(pl.LightningModule):
     """
 
     def __init__(self,
+                 checkpoint_dir,
+                 every_n_epochs=10,
                  resolution=(128, 128),
                  num_slots=7,
                  num_iters=3,
@@ -52,6 +54,8 @@ class SlotAttentionAE(pl.LightningModule):
                  **kwargs
                  ):
         super().__init__()
+        self.checkpoint_dir = checkpoint_dir
+        self.every_n_epochs = every_n_epochs
         self.resolution = resolution
         self.num_slots = num_slots
         self.num_iters = num_iters
@@ -155,6 +159,10 @@ class SlotAttentionAE(pl.LightningModule):
             self.logger.log_image(key="samples", images=list(for_viz(visualize([imgs, result, recons]))))
 
         return loss
+
+    def on_validation_epoch_end(self):
+        if self.current_epoch % self.every_n_epochs == 0:
+            self.trainer.save_checkpoint(os.path.join(self.checkpoint_dir, "checkpoint.ckpt"))
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.parameters(), lr=self.lr)
