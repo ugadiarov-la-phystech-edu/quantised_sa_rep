@@ -130,10 +130,13 @@ class SlotAttentionAE(pl.LightningModule):
         x = self.mlp(x)
 
         slots = self.slot_attention(x)
+        if self.beta <= 0:
+            kl_loss = torch.zeros(1, device=slots.device)
+        else:
+            props, coords, kl_loss = self.coord_quantizer(slots)
+            slots = torch.cat([props, coords], dim=-1)
+            slots = self.slots_lin(slots)
 
-        props, coords, kl_loss = self.coord_quantizer(slots)
-        slots = torch.cat([props, coords], dim=-1)
-        slots = self.slots_lin(slots)
         result, recons, masks = self.decode_slots(slots)
 
         if self.rtd_loss_coef > 0:
